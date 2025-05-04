@@ -1,6 +1,9 @@
 require 'jwt'
+require 'grape-entity'
+
 
 module AuthHelper
+  include EmailHelper
   
   def login_user
     user = User.find_by(email: params[:email])
@@ -17,8 +20,9 @@ module AuthHelper
         httponly: true,
         expires: 24.hours.from_now
       }
-
-      { message: 'Logged in successfully', token: token }
+      # send_email(user.email, 'Welcome back to Food Delivery', 'Thank you for logging in!')
+      UserLoginJob.set(wait: 10.seconds).perform_later(user.email, 'Welcome to Food Delivery', 'Thank you for registering!')
+      { message: 'Logged in successfully', token: token ,user: UserEntity::Details.represent(user)}
     else
       error!('Unauthorized', 401)
     end
@@ -35,6 +39,9 @@ module AuthHelper
     )
   
     if user.save
+      # EmailHelper::send_email(user.email, 'Welcome to Food Delivery', 'Thank you for registering!')\
+      # UserLoginJob.perform_now(user.email, 'Welcome to Food Delivery', 'Thank you for registering!')
+      NotifyUserJob.new.perform(user.email, 'Welcome to Food Delivery', 'Thank you for registering!')
       {message: 'User registered successfully', user: user}
     else
       error!({ message: user.errors.full_messages }, 422)

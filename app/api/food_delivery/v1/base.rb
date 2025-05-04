@@ -11,6 +11,7 @@ module FoodDelivery
       mount FoodDelivery::V1::Auth
       mount FoodDelivery::V1::Item
       mount FoodDelivery::V1::Restaurant
+      mount FoodDelivery::V1::Email
     end
   end
 end
